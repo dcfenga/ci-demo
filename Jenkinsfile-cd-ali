@@ -1,0 +1,74 @@
+//定义变量，在整个Jenkinsfile中有效
+def CONTAINER_NAME = "cicd-demo"
+def CONTAINER_TAG = "latest"
+def HARBOR_URL = "registry.cn-beijing.aliyuncs.com"
+def HARBOR_PROJECT_NAME = "paas-test"
+
+//指定在安装了Docker的节点上运行
+node('docker') {
+    //定义当前构建上下文的Path
+    stage('Initialize') {
+        def dockerHome = tool 'MyDocker'
+        def mavenHome = tool 'MyMaven'
+        env.PATH = "${dockerHome}/bin:${mavenHome}/bin:${env.PATH}"
+    }
+    //根据Job中配置的Repository URL，检出代码到当前工作空间
+    stage('Checkout') {
+        checkout scm
+    }
+
+    //此处可增加一个Stage，做代码格式检查
+
+    //当前工作空间中开始构建，可在构建中可不做单元测试, 需构建节点上安装好Maven
+    stage('Build') {
+        sh "mvn clean install"
+    }
+    //清除当前节点上孤立的镜像并停止以当前容器名运行着的容器(如果存在的话)
+    stage('Image Prune') {
+        imagePrune(CONTAINER_NAME)
+    }
+    //开始构建镜像，需要构建节点上安装好Docker
+    stage('Image Build') {
+        imageBuild(CONTAINER_NAME, CONTAINER_TAG)
+    }
+    //推送镜像到Harbor，需提前Jenkins中配置好Credentials： HarborAccount，构建
+    //节点上配置好与Harbor交互的认证。
+    stage('Image Push') {
+        withCredentials([usernamePassword(credentialsId: '01433499@1701805290278701', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+            imagePush(CONTAINER_NAME, CONTAINER_TAG, HARBOR_URL, HARBOR_PROJECT_NAME, USERNAME, PASSWORD)
+        }
+    }
+    //部署镜像到K8S，需提前Jenkins中配置好Credentials: KubeConfig， 编写好K8S资
+    //源部署清单文件, 同时提供NodePort方式访问APP
+    stage('Image Deploy') {
+        kubernetesDeploy(kubeconfigId: 'AliK8S-1-11-5',
+                configs: 'kube-deploy.yml, kube-svc.yml, kube-ingress.yml',
+                enableConfigSubstitution: true,
+                secretNamespace: 'dubbo',
+                dockerCredentials: [
+                        [credentialsId: '01433499@1701805290278701', url: HARBOR_URL]
+                ]
+        )
+    }
+}
+
+def imagePrune(containerName) {
+    try {
+        sh "docker image prune -f"
+        sh "docker stop $containerName"
+    } catch (error) {
+    }
+}
+
+def imageBuild(containerName, tag) {
+    sh "docker build -t $containerName:$tag  -t $containerName --pull --no-cache ."
+    echo "image build complete"
+}
+
+def imagePush(containerName, tag, harborUrl, harborProjectName,
+                dockerUser, dockerPassword) {
+    sh "docker login -u '$dockerUser' -p '$dockerPassword' '$harborUrl'"
+    sh "docker tag $containerName:$tag $harborUrl/$harborProjectName/$containerName:$tag"
+    sh "docker push $harborUrl/$harborProjectName/$containerName:$tag"
+    echo "image push complete"
+}

@@ -1,0 +1,4 @@
+[gerrit]
+host=127.0.0.1
+port=29418
+project=IOT/PAAS_CI/ci-demo

@@ -1,0 +1,36 @@
+//定义变量，在整个Jenkinsfile中有效
+def ARTIFACT_NAME = "cicd-demo"
+def ARTIFACT_VERSION = "1.0.0"
+def ARTIFACT_SUFFIX = "jar"
+def REPOSITORY_URL = "nexus.uhome.haier.net"
+
+//指定在安装了Docker的节点上运行
+node('docker') {
+    //定义当前构建上下文的Path
+    stage('Initialize') {
+        def mavenHome = tool 'MyMaven'
+        def dockerHome = tool 'MyDocker'
+
+        env.PATH = "${dockerHome}:${mavenHome}/bin:${env.PATH}"
+    }
+    //根据Job中配置的Repository URL，检出代码到当前工作空间
+    stage('Checkout') {
+        checkout scm
+    }
+    //当前工作空间中开始构建，构建中可做单元测试, 需构建节点上安装好Maven
+    stage('Build & SonarQube analysis') {
+        withSonarQubeEnv('MySonarQube') {
+            sh 'mvn clean install sonar:sonar'
+        }
+    }
+
+    //推送构建产出JAR/WAR至构件仓库，Maven工程也可在Build时推送
+    stage('Artifact Upload') {
+        artifactUpload(ARTIFACT_NAME, ARTIFACT_VERSION, ARTIFACT_SUFFIX, REPOSITORY_URL)
+    }
+}
+
+def artifactUpload(artifact_name, artifact_version, artifact_suffix, reposiroty_url) {
+    echo "artifact: ${artifact_name}-${artifact_version}.${artifact_suffix}"
+    echo "reposiroty_url: ${reposiroty_url}"
+}

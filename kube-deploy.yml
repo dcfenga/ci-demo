@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cicd-demo
+  namespace: dubbo
+  labels:
+    name: cicd-demo
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: cicd-demo
+    spec:
+      imagePullSecrets:
+        - name: docker-aliyun-registry
+      containers:
+      - name: cicd-demo
+        image: registry.cn-beijing.aliyuncs.com/paas-test/cicd-demo:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090

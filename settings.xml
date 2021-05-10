@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <localRepository>/data/maven</localRepository>
+    <pluginGroups>
+
+    </pluginGroups>
+
+    <proxies>
+
+    </proxies>
+
+    <servers>
+        <server>
+            <id>haier-release</id>
+            <username>deployment</username>
+            <password>deployment123</password>
+        </server>
+        <server>
+            <id>haier-snapshot</id>
+            <username>deployment</username>
+            <password>deployment123</password>
+        </server>
+    </servers>
+
+    <mirrors>
+    </mirrors>
+
+    <profiles>
+        <profile>
+            <id>nexus</id>
+            <repositories>
+                <repository>
+                    <id>nexus</id>
+                    <name>remote nexus public</name>
+                    <url>http://nexus.uplus.haierubic.com:18081/nexus/content/groups/public/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>nexus-3rd</id>
+                    <name>remote nexus 3rd</name>
+                    <url>http://nexus.uplus.haierubic.com:18081/nexus/content/repositories/thirdparty/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>haier-snapshot</id>
+                    <name>remote haier-snapshot out</name>
+                    <url>http://nexus.uplus.haierubic.com:18081/nexus/content/repositories/snapshots/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>Haier Public Plugin Repositories</id>
+                    <name>remote nexus public</name>
+                    <url>http://nexus.uplus.haierubic.com:18081/nexus/content/groups/public/</url>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+        <profile>
+            <id>jdk-1.7</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <jdk>1.7</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.source>1.7</maven.compiler.source>
+                <maven.compiler.target>1.7</maven.compiler.target>
+                <maven.compiler.compilerVersion>1.7</maven.compiler.compilerVersion>
+            </properties>
+        </profile>
+        <profile>
+            <id>sonar</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <sonar.login>admin</sonar.login>
+                <sonar.password>admin</sonar.password>
+                <!-- Optional URL to server. Default value is http://localhost:9000 -->
+                <sonar.host.url>http://10.159.47.11:9002</sonar.host.url>
+
+                <!--<sonar.login>ec3c53496f6c83142aa70e7e89ba09d6a46186ca</sonar.login>-->
+            </properties>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>nexus</activeProfile>
+    </activeProfiles>
+</settings>
